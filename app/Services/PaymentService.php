@@ -8,6 +8,7 @@ use App\Core\Env;
 use App\Repositories\OrderRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\PayoutRepository;
+use App\Services\DispatchService;
 
 class PaymentService
 {
@@ -49,6 +50,7 @@ class PaymentService
     {
         $this->orders->updateStatuses($orderId, 'paid', 'awaiting_assignment', 'payout_pending');
         $this->orders->addHistory($orderId, 'paid', 'system', 0, 'Pagamento confirmado via Débito API');
+        (new DispatchService())->autoAssignOrder($orderId);
     }
 
     public function markPaymentFailed(int $orderId): void

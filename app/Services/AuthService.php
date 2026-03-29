@@ -47,6 +47,7 @@ class AuthService
         ]);
 
         $this->riderProfiles->upsert($riderId, $data['wallet_provider'], preg_replace('/\D+/', '', $data['phone']), $data['zone'] ?: null);
+        (new WalletService())->createWalletForRider($riderId);
         return $riderId;
     }
 

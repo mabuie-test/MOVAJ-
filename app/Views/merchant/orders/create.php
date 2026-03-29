@@ -16,5 +16,6 @@
 </div>
 <button class="btn btn-success mt-3">Simular Preço por Rota Real</button>
 </form>
+<div id="quote-map" class="mt-3"></div>
 <pre id="quote-output" class="mt-3 p-3 bg-light border rounded"></pre>
 </div></div>

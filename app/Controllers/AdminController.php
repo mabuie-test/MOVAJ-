@@ -8,7 +8,9 @@ use App\Core\Controller;
 use App\Core\Request;
 use App\Core\Response;
 use App\Middleware\AuthMiddleware;
+use App\Repositories\OrderRepository;
 use App\Repositories\RiderRepository;
+use App\Services\DispatchService;
 use App\Services\ReportService;
 
 class AdminController extends Controller
@@ -16,6 +18,8 @@ class AdminController extends Controller
     public function __construct(
         private readonly ReportService $reports = new ReportService(),
         private readonly RiderRepository $riders = new RiderRepository(),
+        private readonly OrderRepository $orders = new OrderRepository(),
+        private readonly DispatchService $dispatch = new DispatchService(),
         private readonly AuthMiddleware $auth = new AuthMiddleware(),
     ) {}
 
@@ -25,7 +29,7 @@ class AdminController extends Controller
     public function dashboard(Request $request): void
     {
         $this->auth->ensure('admin');
-        $this->view('admin/dashboard', ['kpis' => $this->reports->dashboardKpis()]);
+        $this->view('admin/dashboard', ['kpis' => $this->reports->dashboardKpis(), 'activeOrders' => $this->orders->activeOrdersForMap()]);
     }
 
     public function orders(Request $request): void { $this->auth->ensure('admin'); $this->view('admin/orders'); }
@@ -43,6 +47,13 @@ class AdminController extends Controller
         $this->auth->ensure('admin');
         $this->riders->approve((int)$id);
         Response::json(['approved' => true, 'rider_id' => $id]);
+    }
+
+    public function dispatchOrder(Request $request, string $id): void
+    {
+        $this->auth->ensure('admin');
+        $ok = $this->dispatch->autoAssignOrder((int)$id);
+        Response::json(['dispatched' => $ok, 'order_id' => $id]);
     }
 
     public function interveneOrder(Request $request, string $id): void

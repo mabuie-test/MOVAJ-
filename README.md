@@ -1,44 +1,54 @@
 # MovaJá
 
-Plataforma web MVC para marketplace logístico urbano em Moçambique (Maputo/Matola), conectando **merchants**, **riders** e **clientes finais** com rota real de mapa, cobrança antecipada C2B, OTP/PIN e payout B2C.
+Plataforma web MVC para marketplace logístico urbano em Moçambique (Maputo/Matola), conectando **merchants**, **riders** e **clientes finais** com rota real, dispatch por proximidade, tracking ao vivo, OTP/PIN, prova de entrega e carteira interna.
 
 ## Stack
+- PHP 8.1+, MySQL/MariaDB, Composer, Dotenv, PDO
+- MVC clássico (Controllers/Services/Repositories/Models/Views)
+- Bootstrap 5 + Leaflet + Fetch API
 
-- PHP 8.1+
-- MySQL/MariaDB
-- Composer + Dotenv
-- PDO
-- MVC clássico
-- Bootstrap 5 + Fetch API
+## Evolução incremental implementada
 
-## Fases implementadas
+### 1) Mapa interativo Leaflet
+- Maps em: criação de pedido, detalhe do pedido merchant, detalhe do job rider, tracking público e dashboard admin.
+- Reuso de `route_polyline`, distância e ETA sem recálculo desnecessário.
+- Polling de tracking para mover marcador do rider.
 
-1. **Fundação**: estrutura de projeto, bootstrap, core MVC, migrations e seeders.
-2. **Auth multi-perfil**: registo/login para merchant, rider e admin com sessões segregadas.
-3. **Mapa e rota real**: geocoding (Nominatim) e rota/ETA/distância (OSRM).
-4. **Pedidos + quote engine**: cotação e criação de pedidos com persistência de coordenadas/rota/pricing.
-5. **Cobrança C2B Débito API**: inicia e persiste transações mpesa/emola.
-6. **Fila rider**: jobs disponíveis por cidade, aceite e atualização de estados com histórico.
-7. **Tracking + OTP**: tracking por token e confirmação de entrega via OTP.
-8. **Payout B2C Débito API**: disparo automático após confirmação de entrega.
-9. **Dashboards**: painéis merchant, rider, admin com KPIs base.
-10. **Relatórios/finanças/notificações/scripts**: consultas de receita/top merchants e jobs CLI operacionais.
-11. **Revisão de segurança e arquitetura**: CSRF, prepared statements, separação por camadas e serviços.
+### 2) Dispatch por proximidade
+- `DispatchService` com elegibilidade, ranking por distância, reserva por tempo e reatribuição.
+- Configuração por `.env`: `DISPATCH_MODE`, `DISPATCH_RADIUS_KM`, `ASSIGNMENT_RESERVATION_MINUTES`, `MAX_ACTIVE_JOBS_PER_RIDER`.
+- Persistência em `order_dispatch_attempts`.
 
-## Arquitetura
+### 3) Tracking ao vivo
+- `LiveTrackingService` + `rider_locations` para atualização periódica de localização.
+- Endpoint público de live tracking por token (`/track/{token}/live`).
 
-- `app/Core`: Router, Request, Response, View, Database, Session.
-- `app/Controllers`: HTTP orchestration por domínio.
-- `app/Services`: regras de negócio (Auth, Route, Pricing, Order, Payment, Delivery, Report).
-- `app/Repositories`: SQL e consultas especializadas.
-- `app/Models`: entidades/tabelas.
-- `app/Middleware`: CSRF/Auth.
-- `app/Policies`: autorização por recurso.
-- `database/migrations`: schema completo.
-- `scripts`: automações operacionais.
+### 4) SLA operacional
+- `SlaService` calcula tempos de recolha/entrega e classifica `on_time`, `delayed`, `critical_delay`.
+- Persistência de métricas em colunas de `orders` (`pickup_delay_minutes`, `delivery_delay_minutes`, `sla_status` etc.).
+
+### 5) Prova de entrega
+- `ProofOfDeliveryService` para foto, assinatura base64, observações e resumo da prova.
+- Persistência em `delivery_proofs`.
+
+### 6) Wallet interna de riders
+- `WalletService` com saldo disponível/pendente, crédito por entrega, histórico auditável e payout request.
+- Tabelas: `rider_wallets`, `rider_wallet_transactions`, `rider_wallet_payout_requests`.
+- Integração payout com Débito API e reconciliação de status.
+
+## Migrations
+- `001_create_tables.sql` (base)
+- `002_operational_evolution.sql` (dispatch/live/SLA/proof/wallet)
+
+## Scripts CLI
+- `reassign_stale_orders.php`
+- `reconcile_live_jobs.php`
+- `check_pending_wallet_payouts.php`
+- `reconcile_wallet_payout_statuses.php`
+- `expire_assignment_reservations.php`
+- `sla_daily_metrics.php`
 
 ## Instalação
-
 ```bash
 composer install
 cp .env.example .env
@@ -47,79 +57,8 @@ php database/seed.php
 php -S localhost:8000 -t public
 ```
 
-## Variáveis `.env`
-
-- Aplicação: `APP_*`
-- Banco: `DB_*`
-- Débito API: `DEBITO_*`
-- Mapas: `MAP_PROVIDER`, `MAP_BASE_URL`, `GEOCODING_BASE_URL`
-- Pricing: `BASE_DELIVERY_PRICE`, `PRICE_PER_KM`, `PLATFORM_COMMISSION_*`, `*_SURCHARGE`
-- Operação: `OTP_EXPIRY_MINUTES`, `MAX_ASSIGNMENT_TIME_MINUTES`
-
-## Rotas principais
-
-### Público
-- `GET /`
-- `GET /track/{token}`
-- `POST /track/{token}/otp`
-
-### Auth
-- `GET|POST /login`
-- `GET|POST /register/merchant`
-- `GET|POST /register/rider`
-- `GET|POST /forgot-password`
-- `GET /reset-password/{token}`
-- `POST /reset-password`
-
-### Merchant
-- `GET /merchant/dashboard`
-- `GET /merchant/orders`
-- `GET /merchant/orders/create`
-- `POST /merchant/orders/quote`
-- `POST /merchant/orders`
-- `GET /merchant/orders/{id}`
-- `POST /merchant/orders/{id}/pay`
-
-### Rider
-- `GET /rider/dashboard`
-- `GET /rider/jobs`
-- `POST /rider/jobs/{id}/accept`
-- `POST /rider/jobs/{id}/status`
-
-### Admin
-- `GET /admin`
-- `GET /admin/reports`
-- `POST /admin/riders/{id}/approve`
-
-## Cron jobs
-
-```bash
-* * * * * php /path/scripts/check_pending_payments.php
-* * * * * php /path/scripts/check_pending_payouts.php
-*/5 * * * * php /path/scripts/expire_otps.php
-*/5 * * * * php /path/scripts/reassign_stale_orders.php
-0 23 * * * php /path/scripts/daily_metrics.php
-```
-
-## Credenciais seed
-
-- Admin: `admin@movaja.local`
-- Password hash seeded na migration/seeder (trocar em produção).
-
-## Segurança
-
-- PDO com prepared statements.
-- CSRF em todas as rotas `POST`.
-- Sessão regenerada em login.
-- Escaping de saída nas views com helper `e()`.
-- Tokens públicos para tracking.
-- Histórico de status para rastreabilidade operacional.
-
-
-## Revisão de consistência aplicada
-
-- Permissões por papel reforçadas nos controllers com `AuthMiddleware` (merchant/rider/admin).
-- Política de acesso a pedidos aplicada para visibilidade e pagamento por merchant proprietário.
-- OTP com controle de tentativas e expiração na tabela `otp_confirmations`.
-- Payout agora usa carteira do rider (`rider_profiles`) em vez de telefone do destinatário.
-- KPIs financeiros incluem taxa de falha de pagamento e payout.
+## Segurança e consistência
+- CSRF em POST, sessões regeneradas, prepared statements, políticas de acesso por papel.
+- Riders só atualizam localização de pedidos atribuídos.
+- OTP com limite de tentativas + expiração.
+- Prova de entrega e transações de wallet auditáveis.

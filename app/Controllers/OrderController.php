@@ -11,8 +11,10 @@ use App\Core\Session;
 use App\Middleware\AuthMiddleware;
 use App\Policies\OrderPolicy;
 use App\Repositories\OrderRepository;
+use App\Services\MapPresentationService;
 use App\Services\OrderService;
 use App\Services\PaymentService;
+use App\Services\ProofOfDeliveryService;
 
 class OrderController extends Controller
 {
@@ -22,6 +24,8 @@ class OrderController extends Controller
         private readonly PaymentService $payment = new PaymentService(),
         private readonly AuthMiddleware $auth = new AuthMiddleware(),
         private readonly OrderPolicy $policy = new OrderPolicy(),
+        private readonly MapPresentationService $map = new MapPresentationService(),
+        private readonly ProofOfDeliveryService $proofs = new ProofOfDeliveryService(),
     ) {}
 
     public function index(Request $request): void
@@ -74,7 +78,9 @@ class OrderController extends Controller
             return;
         }
 
-        $this->view('merchant/orders/show', ['order' => $order]);
+        $mapPayload = $this->map->orderMapPayload($order);
+        $proof = $this->proofs->generateProofSummary((int)$order['id']);
+        $this->view('merchant/orders/show', ['order' => $order, 'mapPayload' => $mapPayload, 'proof' => $proof]);
     }
 
     public function pay(Request $request, string $id): void

@@ -88,6 +88,31 @@ class OrderRepository extends BaseRepository
         return $stmt->rowCount();
     }
 
+
+    public function updateStatusWithTimestamp(int $orderId, string $status): void
+    {
+        $fieldMap = [
+            'accepted' => 'accepted_at',
+            'pickup_arrived' => 'pickup_arrived_at',
+            'picked_up' => 'picked_up_at',
+            'in_transit' => 'in_transit_at',
+            'delivered' => 'delivered_at',
+        ];
+        $field = $fieldMap[$status] ?? null;
+        if ($field) {
+            $stmt = $this->db->prepare("UPDATE orders SET delivery_status=:status, {$field}=NOW() WHERE id=:order_id");
+            $stmt->execute(['order_id' => $orderId, 'status' => $status]);
+            return;
+        }
+
+        $this->updateDeliveryStatus($orderId, $status);
+    }
+
+    public function activeOrdersForMap(): array
+    {
+        $sql = "SELECT id,pickup_lat,pickup_lng,dropoff_lat,dropoff_lng,delivery_status,route_polyline,city FROM orders WHERE delivery_status IN ('accepted','picked_up','in_transit','near_destination','arrived') ORDER BY id DESC LIMIT 200";
+        return $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    }
     public function addHistory(int $orderId, string $status, string $actorType, int $actorId, ?string $notes = null): void
     {
         $stmt = $this->db->prepare('INSERT INTO order_status_history (order_id, status, actor_type, actor_id, notes) VALUES (:order_id,:status,:actor_type,:actor_id,:notes)');
