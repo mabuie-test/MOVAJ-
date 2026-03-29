@@ -114,3 +114,12 @@ php -S localhost:8000 -t public
 - Escaping de saída nas views com helper `e()`.
 - Tokens públicos para tracking.
 - Histórico de status para rastreabilidade operacional.
+
+
+## Revisão de consistência aplicada
+
+- Permissões por papel reforçadas nos controllers com `AuthMiddleware` (merchant/rider/admin).
+- Política de acesso a pedidos aplicada para visibilidade e pagamento por merchant proprietário.
+- OTP com controle de tentativas e expiração na tabela `otp_confirmations`.
+- Payout agora usa carteira do rider (`rider_profiles`) em vez de telefone do destinatário.
+- KPIs financeiros incluem taxa de falha de pagamento e payout.

@@ -34,17 +34,23 @@ class TrackingController extends Controller
     {
         $order = $this->orders->findByTrackingToken($token);
         if (!$order || !$this->delivery->validateOtp($order, (string)$request->input('otp'))) {
-            Response::json(['success' => false, 'message' => 'OTP inválido ou expirado'], 422);
+            Response::json(['success' => false, 'message' => 'OTP inválido, expirado ou bloqueado por tentativas'], 422);
             return;
         }
 
         $this->delivery->markDelivered((int)$order['id'], (int)$order['assigned_rider_id']);
 
         if (!empty($order['assigned_rider_id'])) {
-            $response = $this->delivery->triggerRiderPayout($order, 'mpesa', (string)$order['dropoff_contact_phone']);
-            (($response['status'] ?? '') === 'success') ? $this->payment->markPayoutCompleted((int)$order['id']) : $this->payment->markPayoutFailed((int)$order['id']);
+            try {
+                $response = $this->delivery->triggerRiderPayout($order);
+                (($response['status'] ?? '') === 'success')
+                    ? $this->payment->markPayoutCompleted((int)$order['id'])
+                    : $this->payment->markPayoutFailed((int)$order['id']);
+            } catch (\Throwable) {
+                $this->payment->markPayoutFailed((int)$order['id']);
+            }
         }
 
-        Response::json(['success' => true, 'message' => 'Entrega confirmada e payout iniciado']);
+        Response::json(['success' => true, 'message' => 'Entrega confirmada e payout processado']);
     }
 }

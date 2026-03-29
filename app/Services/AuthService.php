@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Core\Session;
 use App\Repositories\AdminRepository;
 use App\Repositories\MerchantRepository;
+use App\Repositories\RiderProfileRepository;
 use App\Repositories\RiderRepository;
 
 class AuthService
@@ -14,6 +15,7 @@ class AuthService
     public function __construct(
         private readonly MerchantRepository $merchants = new MerchantRepository(),
         private readonly RiderRepository $riders = new RiderRepository(),
+        private readonly RiderProfileRepository $riderProfiles = new RiderProfileRepository(),
         private readonly AdminRepository $admins = new AdminRepository()
     ) {}
 
@@ -31,7 +33,7 @@ class AuthService
 
     public function registerRider(array $data): int
     {
-        return $this->riders->create([
+        $riderId = $this->riders->create([
             'name' => trim($data['name']),
             'email' => strtolower(trim($data['email'])),
             'phone' => preg_replace('/\D+/', '', $data['phone']),
@@ -43,6 +45,9 @@ class AuthService
             'document_path' => null,
             'approval_status' => 'pending',
         ]);
+
+        $this->riderProfiles->upsert($riderId, $data['wallet_provider'], preg_replace('/\D+/', '', $data['phone']), $data['zone'] ?: null);
+        return $riderId;
     }
 
     public function attemptMerchantLogin(string $email, string $password): bool

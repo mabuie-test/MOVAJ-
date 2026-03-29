@@ -24,6 +24,8 @@ class ReportService
             'total_commission' => 'SELECT COALESCE(SUM(platform_fee),0) FROM orders WHERE payment_status="paid"',
             'total_payouts' => 'SELECT COALESCE(SUM(amount),0) FROM payouts WHERE status="success"',
             'failed_payouts' => 'SELECT COUNT(*) FROM payouts WHERE status="failed"',
+            'payment_fail_rate' => 'SELECT COALESCE((SUM(payment_status="payment_failed")/NULLIF(COUNT(*),0))*100,0) FROM orders',
+            'payout_fail_rate' => 'SELECT COALESCE((SUM(status="failed")/NULLIF(COUNT(*),0))*100,0) FROM payouts',
             'active_merchants' => 'SELECT COUNT(*) FROM merchants WHERE is_active=1',
             'active_riders' => "SELECT COUNT(*) FROM riders WHERE approval_status='approved'",
         ];

@@ -81,6 +81,7 @@ class OrderService
         ];
 
         $orderId = $this->orders->create($payload);
+        $this->otpService->initializeOtp($orderId, $otp, $expiresAt);
         $this->orders->addHistory($orderId, 'pending_payment', 'merchant', $merchantId, 'Pedido criado e pendente de pagamento');
         return $orderId;
     }

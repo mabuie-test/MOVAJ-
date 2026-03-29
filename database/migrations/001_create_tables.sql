@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS rider_profiles (
   is_online TINYINT(1) NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_rider_profile_rider (rider_id),
   CONSTRAINT fk_rider_profile_rider FOREIGN KEY (rider_id) REFERENCES riders(id)
 );
 CREATE TABLE IF NOT EXISTS admins (

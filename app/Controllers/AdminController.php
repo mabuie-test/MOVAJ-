@@ -7,26 +7,47 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Request;
 use App\Core\Response;
+use App\Middleware\AuthMiddleware;
 use App\Repositories\RiderRepository;
 use App\Services\ReportService;
 
 class AdminController extends Controller
 {
-    public function __construct(private readonly ReportService $reports = new ReportService(), private readonly RiderRepository $riders = new RiderRepository()) {}
+    public function __construct(
+        private readonly ReportService $reports = new ReportService(),
+        private readonly RiderRepository $riders = new RiderRepository(),
+        private readonly AuthMiddleware $auth = new AuthMiddleware(),
+    ) {}
 
     public function loginForm(Request $request): void { $this->view('auth/login'); }
     public function login(Request $request): void { Response::redirect('/admin'); }
-    public function dashboard(Request $request): void { $this->view('admin/dashboard', ['kpis' => $this->reports->dashboardKpis()]); }
-    public function orders(Request $request): void { $this->view('admin/orders'); }
-    public function payments(Request $request): void { $this->view('admin/payments'); }
-    public function payouts(Request $request): void { $this->view('admin/payouts'); }
-    public function reports(Request $request): void { $this->view('admin/reports', ['report' => $this->reports->operationalSummary()]); }
+
+    public function dashboard(Request $request): void
+    {
+        $this->auth->ensure('admin');
+        $this->view('admin/dashboard', ['kpis' => $this->reports->dashboardKpis()]);
+    }
+
+    public function orders(Request $request): void { $this->auth->ensure('admin'); $this->view('admin/orders'); }
+    public function payments(Request $request): void { $this->auth->ensure('admin'); $this->view('admin/payments'); }
+    public function payouts(Request $request): void { $this->auth->ensure('admin'); $this->view('admin/payouts'); }
+
+    public function reports(Request $request): void
+    {
+        $this->auth->ensure('admin');
+        $this->view('admin/reports', ['report' => $this->reports->operationalSummary()]);
+    }
 
     public function approveRider(Request $request, string $id): void
     {
+        $this->auth->ensure('admin');
         $this->riders->approve((int)$id);
         Response::json(['approved' => true, 'rider_id' => $id]);
     }
 
-    public function interveneOrder(Request $request, string $id): void { Response::json(['intervened' => true, 'order_id' => $id]); }
+    public function interveneOrder(Request $request, string $id): void
+    {
+        $this->auth->ensure('admin');
+        Response::json(['intervened' => true, 'order_id' => $id]);
+    }
 }

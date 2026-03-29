@@ -13,7 +13,8 @@ class AuthMiddleware
     {
         Session::start();
         if (!Session::get($guard . '_id')) {
-            Response::redirect('/login');
+            $target = $guard === 'admin' ? '/admin/login' : '/login';
+            Response::redirect($target);
         }
     }
 }

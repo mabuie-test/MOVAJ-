@@ -8,6 +8,8 @@ use App\Core\Controller;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
+use App\Middleware\AuthMiddleware;
+use App\Policies\OrderPolicy;
 use App\Repositories\OrderRepository;
 use App\Services\OrderService;
 use App\Services\PaymentService;
@@ -18,20 +20,27 @@ class OrderController extends Controller
         private readonly OrderService $ordersService = new OrderService(),
         private readonly OrderRepository $orders = new OrderRepository(),
         private readonly PaymentService $payment = new PaymentService(),
+        private readonly AuthMiddleware $auth = new AuthMiddleware(),
+        private readonly OrderPolicy $policy = new OrderPolicy(),
     ) {}
 
     public function index(Request $request): void
     {
-        Session::start();
+        $this->auth->ensure('merchant');
         $merchantId = (int)Session::get('merchant_id', 0);
-        $orders = $merchantId ? $this->orders->listByMerchant($merchantId) : [];
+        $orders = $this->orders->listByMerchant($merchantId);
         $this->view('merchant/orders/index', ['orders' => $orders]);
     }
 
-    public function create(Request $request): void { $this->view('merchant/orders/create'); }
+    public function create(Request $request): void
+    {
+        $this->auth->ensure('merchant');
+        $this->view('merchant/orders/create');
+    }
 
     public function quote(Request $request): void
     {
+        $this->auth->ensure('merchant');
         try {
             $quote = $this->ordersService->quote($request->all());
             Response::json($quote);
@@ -42,12 +51,8 @@ class OrderController extends Controller
 
     public function store(Request $request): void
     {
-        Session::start();
+        $this->auth->ensure('merchant');
         $merchantId = (int)Session::get('merchant_id', 0);
-        if ($merchantId === 0) {
-            Response::json(['error' => 'Autenticação do merchant obrigatória'], 401);
-            return;
-        }
 
         try {
             $input = $request->all();
@@ -61,15 +66,24 @@ class OrderController extends Controller
 
     public function show(Request $request, string $id): void
     {
-        $this->view('merchant/orders/show', ['order' => $this->orders->findById((int)$id)]);
+        $this->auth->ensure('merchant');
+        $order = $this->orders->findById((int)$id);
+        $merchantId = (int)Session::get('merchant_id', 0);
+        if (!$order || !$this->policy->canMerchantView($order, $merchantId)) {
+            Response::json(['error' => 'Acesso negado ao pedido'], 403);
+            return;
+        }
+
+        $this->view('merchant/orders/show', ['order' => $order]);
     }
 
     public function pay(Request $request, string $id): void
     {
-        Session::start();
+        $this->auth->ensure('merchant');
         $order = $this->orders->findById((int)$id);
-        if (!$order) {
-            Response::json(['error' => 'Pedido não encontrado'], 404);
+        $merchantId = (int)Session::get('merchant_id', 0);
+        if (!$order || !$this->policy->canMerchantView($order, $merchantId)) {
+            Response::json(['error' => 'Pedido inválido'], 404);
             return;
         }
 
