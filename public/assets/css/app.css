@@ -50,3 +50,13 @@ body{background:var(--mv-bg);color:var(--mv-text)}
   .hero{padding:1.25rem}
   #quote-map,#tracking-map,#rider-job-map,#admin-map{height:280px}
 }
+
+.app-footer{border-top:1px solid #e5e7eb;background:#fff;color:#64748b}
+.app-footer a{color:#64748b;text-decoration:none}
+.app-footer a:hover{color:var(--mv-primary)}
+.offcanvas .app-sidebar{display:block;width:100%;min-height:auto;background:#0f172a}
+.module-card{background:#fff;border:1px solid #e8edf4;border-radius:14px;padding:1rem;box-shadow:0 4px 16px rgba(16,24,40,.05)}
+.module-header{display:flex;justify-content:space-between;align-items:center;gap:.75rem;margin-bottom:1rem}
+.filter-bar{display:flex;gap:.5rem;flex-wrap:wrap}
+.filter-bar .form-control,.filter-bar .form-select{max-width:220px}
+.table-actions .btn{width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center}
