@@ -16,14 +16,30 @@ window.MovaMap = {
   drawMap(elId, payload, options = {}) {
     const el = document.getElementById(elId);
     if (!el || !window.L || !payload) return;
+
+    window.__movaMaps = window.__movaMaps || {};
+    if (window.__movaMaps[elId]) {
+      window.__movaMaps[elId].remove();
+    }
+
     const map = L.map(el).setView([payload.pickup.lat, payload.pickup.lng], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-    L.marker([payload.pickup.lat, payload.pickup.lng]).addTo(map).bindPopup('Recolha');
-    L.marker([payload.dropoff.lat, payload.dropoff.lng]).addTo(map).bindPopup('Entrega');
+    const pickupDetails = payload.pickup.display_name || `${payload.pickup.lat}, ${payload.pickup.lng}`;
+    const dropoffDetails = payload.dropoff.display_name || `${payload.dropoff.lat}, ${payload.dropoff.lng}`;
 
-    const line = payload.route?.polyline ? this.decodePolyline(payload.route.polyline) : [[payload.pickup.lat, payload.pickup.lng], [payload.dropoff.lat, payload.dropoff.lng]];
-    const routeLayer = L.polyline(line, { color: '#0d6efd', weight: 4 }).addTo(map);
+    L.marker([payload.pickup.lat, payload.pickup.lng]).addTo(map)
+      .bindPopup(`<strong>Origem</strong><br>${pickupDetails}`);
+
+    L.marker([payload.dropoff.lat, payload.dropoff.lng]).addTo(map)
+      .bindPopup(`<strong>Destino</strong><br>${dropoffDetails}`);
+
+    const line = payload.route?.polyline
+      ? this.decodePolyline(payload.route.polyline)
+      : [[payload.pickup.lat, payload.pickup.lng], [payload.dropoff.lat, payload.dropoff.lng]];
+
+    const routeLayer = L.polyline(line, { color: '#0d6efd', weight: 5, opacity: 0.85 }).addTo(map);
+    routeLayer.bindPopup(`Distância: ${payload.route?.distance_km ?? '-'} km<br>Duração: ${payload.route?.duration_minutes ?? '-'} min`);
     map.fitBounds(routeLayer.getBounds(), { padding: [20, 20] });
 
     if (payload.rider?.lat && payload.rider?.lng) {
@@ -39,6 +55,7 @@ window.MovaMap = {
       }
     }
 
+    window.__movaMaps[elId] = map;
     return map;
   }
 };

@@ -7,9 +7,11 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Request;
 use App\Core\Response;
+use App\Core\Session;
 use App\Middleware\AuthMiddleware;
 use App\Repositories\OrderRepository;
 use App\Repositories\RiderRepository;
+use App\Services\AuthService;
 use App\Services\DispatchService;
 use App\Services\ReportService;
 
@@ -21,15 +23,38 @@ class AdminController extends Controller
         private readonly OrderRepository $orders = new OrderRepository(),
         private readonly DispatchService $dispatch = new DispatchService(),
         private readonly AuthMiddleware $auth = new AuthMiddleware(),
+        private readonly AuthService $authService = new AuthService(),
     ) {}
 
-    public function loginForm(Request $request): void { $this->view('auth/login'); }
-    public function login(Request $request): void { Response::redirect('/admin'); }
+    public function loginForm(Request $request): void
+    {
+        Session::start();
+        if (Session::get('admin_id')) {
+            Response::redirect('/admin');
+            return;
+        }
+
+        $error = $request->input('error');
+        $this->view('auth/admin_login', ['error' => $error]);
+    }
+
+    public function login(Request $request): void
+    {
+        $email = (string)$request->input('email');
+        $password = (string)$request->input('password');
+
+        if (!$this->authService->attemptAdminLogin($email, $password)) {
+            $this->view('auth/admin_login', ['error' => 'Credenciais de administrador inválidas.']);
+            return;
+        }
+
+        Response::redirect('/admin');
+    }
 
     public function dashboard(Request $request): void
     {
         $this->auth->ensure('admin');
-        $this->view('admin/dashboard', ['kpis' => $this->reports->dashboardKpis(), 'activeOrders' => $this->orders->activeOrdersForMap()]);
+        $this->view('admin/dashboard', ['kpis' => $this->reports->dashboardKpis(), 'activeOrders' => $this->orders->activeOrdersForMap(), 'pendingRiders' => $this->riders->listPending(30)]);
     }
 
     public function orders(Request $request): void { $this->auth->ensure('admin'); $this->view('admin/orders'); }

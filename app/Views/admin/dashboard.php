@@ -28,3 +28,27 @@
     </div>
   </div>
 </div>
+
+<div class="module-card mt-3">
+  <div class="module-header"><h5 class="mb-0">Aprovação de Riders</h5><span class="small text-muted">Novos cadastros pendentes</span></div>
+  <?php if (empty($pendingRiders ?? [])): ?>
+    <p class="text-muted mb-0">Sem riders pendentes no momento.</p>
+  <?php else: ?>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead><tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Cidade/Zona</th><th></th></tr></thead>
+        <tbody>
+        <?php foreach (($pendingRiders ?? []) as $rider): ?>
+          <tr id="pending-rider-<?= (int)$rider['id'] ?>">
+            <td><?= e((string)$rider['name']) ?></td>
+            <td><?= e((string)$rider['email']) ?></td>
+            <td><?= e((string)$rider['phone']) ?></td>
+            <td><?= e((string)$rider['city']) ?><?= !empty($rider['zone']) ? ' / '.e((string)$rider['zone']) : '' ?></td>
+            <td class="text-end"><button class="btn btn-sm btn-success" onclick="approveRiderAdmin(<?= (int)$rider['id'] ?>, this, '<?= csrf_token() ?>')"><i class="fa-solid fa-check me-1"></i>Aprovar</button></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php endif; ?>
+</div>
