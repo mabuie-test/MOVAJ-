@@ -1,0 +1,22 @@
+{
+  "name": "movaja/platform",
+  "description": "MovaJá urban logistics marketplace MVC platform",
+  "type": "project",
+  "require": {
+    "php": "^8.1",
+    "vlucas/phpdotenv": "^5.6",
+    "guzzlehttp/guzzle": "^7.8",
+    "phpmailer/phpmailer": "^6.9",
+    "ramsey/uuid": "^4.7"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/"
+    }
+  },
+  "scripts": {
+    "serve": "php -S localhost:8000 -t public",
+    "migrate": "php database/migrate.php",
+    "seed": "php database/seed.php"
+  }
+}

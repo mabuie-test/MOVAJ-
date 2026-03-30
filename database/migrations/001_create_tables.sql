@@ -1,0 +1,241 @@
+CREATE TABLE IF NOT EXISTS cities (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL UNIQUE,
+  code VARCHAR(30) NOT NULL UNIQUE,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS service_areas (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  city_id BIGINT UNSIGNED NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  special_fee DECIMAL(12,2) DEFAULT 0,
+  coverage_enabled TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_service_city FOREIGN KEY (city_id) REFERENCES cities(id)
+);
+CREATE TABLE IF NOT EXISTS merchants (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  business_name VARCHAR(180) NOT NULL,
+  owner_name VARCHAR(180) NOT NULL,
+  email VARCHAR(180) NOT NULL UNIQUE,
+  phone VARCHAR(30) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  city VARCHAR(80) NOT NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS riders (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(180) NOT NULL,
+  email VARCHAR(180) NOT NULL UNIQUE,
+  phone VARCHAR(30) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  city VARCHAR(80) NOT NULL,
+  zone VARCHAR(120) NULL,
+  wallet_provider ENUM('mpesa','emola') NOT NULL,
+  bike_number VARCHAR(80) NULL,
+  document_path VARCHAR(255) NULL,
+  approval_status ENUM('pending','approved','rejected') DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS merchant_addresses (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  merchant_id BIGINT UNSIGNED NOT NULL,
+  label VARCHAR(120) NOT NULL,
+  contact_name VARCHAR(180) NOT NULL,
+  contact_phone VARCHAR(30) NOT NULL,
+  address_line VARCHAR(255) NOT NULL,
+  lat DECIMAL(10,7) NULL,
+  lng DECIMAL(10,7) NULL,
+  city VARCHAR(80) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_merchant_addresses_merchant FOREIGN KEY (merchant_id) REFERENCES merchants(id)
+);
+CREATE TABLE IF NOT EXISTS rider_profiles (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  rider_id BIGINT UNSIGNED NOT NULL,
+  wallet_provider ENUM('mpesa','emola') NOT NULL,
+  wallet_number VARCHAR(30) NOT NULL,
+  operating_zone VARCHAR(120) NULL,
+  vehicle_type VARCHAR(50) DEFAULT 'moto',
+  is_online TINYINT(1) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_rider_profile_rider (rider_id),
+  CONSTRAINT fk_rider_profile_rider FOREIGN KEY (rider_id) REFERENCES riders(id)
+);
+CREATE TABLE IF NOT EXISTS admins (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  email VARCHAR(180) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS orders (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  merchant_id BIGINT UNSIGNED NOT NULL,
+  public_tracking_token VARCHAR(128) NOT NULL UNIQUE,
+  pickup_contact_name VARCHAR(180) NOT NULL,
+  pickup_contact_phone VARCHAR(30) NOT NULL,
+  pickup_address VARCHAR(255) NOT NULL,
+  pickup_reference VARCHAR(255) NULL,
+  pickup_lat DECIMAL(10,7) NOT NULL,
+  pickup_lng DECIMAL(10,7) NOT NULL,
+  dropoff_contact_name VARCHAR(180) NOT NULL,
+  dropoff_contact_phone VARCHAR(30) NOT NULL,
+  dropoff_address VARCHAR(255) NOT NULL,
+  dropoff_reference VARCHAR(255) NULL,
+  dropoff_lat DECIMAL(10,7) NOT NULL,
+  dropoff_lng DECIMAL(10,7) NOT NULL,
+  package_type VARCHAR(50) NOT NULL,
+  package_description TEXT NOT NULL,
+  package_size VARCHAR(60) NULL,
+  package_weight DECIMAL(10,2) NULL,
+  estimated_value DECIMAL(12,2) NULL,
+  notes TEXT NULL,
+  city VARCHAR(80) NOT NULL,
+  zone VARCHAR(120) NULL,
+  route_distance_km DECIMAL(10,2) NOT NULL,
+  route_duration_minutes INT NOT NULL,
+  route_provider VARCHAR(60) NOT NULL,
+  route_polyline MEDIUMTEXT NULL,
+  geocoding_confidence DECIMAL(5,4) NULL,
+  base_price DECIMAL(12,2) NOT NULL,
+  distance_price DECIMAL(12,2) NOT NULL,
+  urgency_surcharge DECIMAL(12,2) NOT NULL DEFAULT 0,
+  extra_fee DECIMAL(12,2) NOT NULL DEFAULT 0,
+  platform_fee DECIMAL(12,2) NOT NULL,
+  rider_payout DECIMAL(12,2) NOT NULL,
+  total_paid_by_merchant DECIMAL(12,2) DEFAULT 0,
+  price_total DECIMAL(12,2) NOT NULL,
+  pricing_breakdown JSON NOT NULL,
+  payment_method VARCHAR(30) NULL,
+  payment_status VARCHAR(30) NOT NULL DEFAULT 'pending_payment',
+  payout_status VARCHAR(30) NOT NULL DEFAULT 'payout_pending',
+  delivery_status VARCHAR(30) NOT NULL DEFAULT 'draft',
+  otp_code VARCHAR(10) NULL,
+  otp_expires_at DATETIME NULL,
+  proof_of_delivery_path VARCHAR(255) NULL,
+  assigned_rider_id BIGINT UNSIGNED NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_order_status (delivery_status, payment_status, payout_status),
+  CONSTRAINT fk_order_merchant FOREIGN KEY (merchant_id) REFERENCES merchants(id),
+  CONSTRAINT fk_order_rider FOREIGN KEY (assigned_rider_id) REFERENCES riders(id)
+);
+CREATE TABLE IF NOT EXISTS order_status_history (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  order_id BIGINT UNSIGNED NOT NULL,
+  status VARCHAR(30) NOT NULL,
+  actor_type VARCHAR(40) NOT NULL,
+  actor_id BIGINT UNSIGNED NOT NULL,
+  notes VARCHAR(255) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_history_order FOREIGN KEY (order_id) REFERENCES orders(id),
+  INDEX idx_history_order(order_id, status)
+);
+CREATE TABLE IF NOT EXISTS payments (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  order_id BIGINT UNSIGNED NOT NULL,
+  merchant_id BIGINT UNSIGNED NOT NULL,
+  debito_reference VARCHAR(120) NULL,
+  provider VARCHAR(40) NOT NULL,
+  payment_type VARCHAR(20) NOT NULL,
+  request_payload JSON NOT NULL,
+  raw_response JSON NOT NULL,
+  amount DECIMAL(12,2) NOT NULL,
+  status VARCHAR(30) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_payment_order FOREIGN KEY (order_id) REFERENCES orders(id),
+  CONSTRAINT fk_payment_merchant FOREIGN KEY (merchant_id) REFERENCES merchants(id)
+);
+CREATE TABLE IF NOT EXISTS payouts (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  order_id BIGINT UNSIGNED NOT NULL,
+  rider_id BIGINT UNSIGNED NOT NULL,
+  debito_reference VARCHAR(120) NULL,
+  provider VARCHAR(40) NOT NULL,
+  payment_type VARCHAR(20) NOT NULL,
+  request_payload JSON NOT NULL,
+  raw_response JSON NOT NULL,
+  amount DECIMAL(12,2) NOT NULL,
+  status VARCHAR(30) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_payout_order FOREIGN KEY (order_id) REFERENCES orders(id),
+  CONSTRAINT fk_payout_rider FOREIGN KEY (rider_id) REFERENCES riders(id)
+);
+CREATE TABLE IF NOT EXISTS otp_confirmations (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  order_id BIGINT UNSIGNED NOT NULL,
+  otp_code VARCHAR(10) NOT NULL,
+  attempts INT NOT NULL DEFAULT 0,
+  max_attempts INT NOT NULL DEFAULT 5,
+  expires_at DATETIME NOT NULL,
+  verified_at DATETIME NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_otp_order FOREIGN KEY (order_id) REFERENCES orders(id)
+);
+CREATE TABLE IF NOT EXISTS notifications (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_type VARCHAR(30) NOT NULL,
+  user_id BIGINT UNSIGNED NOT NULL,
+  channel VARCHAR(30) NOT NULL,
+  payload JSON NOT NULL,
+  status VARCHAR(30) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS financial_transactions (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  order_id BIGINT UNSIGNED NOT NULL,
+  type VARCHAR(30) NOT NULL,
+  amount DECIMAL(12,2) NOT NULL,
+  city VARCHAR(80) NOT NULL,
+  method VARCHAR(30) NOT NULL,
+  metadata JSON NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_fin_order FOREIGN KEY (order_id) REFERENCES orders(id)
+);
+CREATE TABLE IF NOT EXISTS settings (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  setting_key VARCHAR(100) UNIQUE NOT NULL,
+  setting_value TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS activity_logs (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  actor_type VARCHAR(30) NOT NULL,
+  actor_id BIGINT UNSIGNED NOT NULL,
+  action VARCHAR(120) NOT NULL,
+  details JSON NULL,
+  ip_address VARCHAR(45) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS password_resets (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_type VARCHAR(30) NOT NULL,
+  email VARCHAR(180) NOT NULL,
+  token VARCHAR(120) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_reset_token(token)
+);
+CREATE TABLE IF NOT EXISTS email_verifications (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_type VARCHAR(30) NOT NULL,
+  user_id BIGINT UNSIGNED NOT NULL,
+  token VARCHAR(120) NOT NULL,
+  verified_at DATETIME NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

@@ -1,0 +1,47 @@
+MovaJá - Como rodar no Windows
+
+1) Pré-requisitos
+- Windows 10/11
+- PHP 8.1+ no PATH
+- Composer instalado
+- MySQL ou MariaDB ativo
+
+2) Abrir terminal (PowerShell) na pasta do projeto
+Exemplo:
+cd C:\caminho\para\MOVAJ-
+
+3) Instalar dependências PHP
+composer install
+
+4) Criar arquivo de ambiente
+copy .env.example .env
+
+5) Ajustar credenciais do banco no .env
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=movaja
+DB_USER=root
+DB_PASS=sua_senha
+
+6) Criar base de dados no MySQL
+CREATE DATABASE movaja CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+7) Rodar migrations e seeders
+php database\migrate.php
+php database\seed.php
+
+8) Subir servidor local
+php -S localhost:8000 -t public
+
+9) Acessar no navegador
+http://localhost:8000
+
+10) Scripts operacionais (opcional)
+php scripts\check_pending_payments.php
+php scripts\check_pending_payouts.php
+php scripts\reconcile_live_jobs.php
+php scripts\sla_daily_metrics.php
+
+Observações
+- Se der erro de extensão PHP, habilite no php.ini (pdo_mysql, openssl, mbstring).
+- Para uso real, configure DEBITO_TOKEN/DEBITO_WALLET_ID e endpoints no .env.
