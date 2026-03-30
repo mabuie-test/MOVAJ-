@@ -12,4 +12,10 @@ class AdminRepository extends BaseRepository
         $stmt->execute(['email' => $email]);
         return $stmt->fetch() ?: null;
     }
+
+    public function updatePasswordByEmail(string $email, string $passwordHash): void
+    {
+        $stmt = $this->db->prepare('UPDATE admins SET password_hash=:password_hash WHERE email=:email');
+        $stmt->execute(['password_hash' => $passwordHash, 'email' => $email]);
+    }
 }
