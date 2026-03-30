@@ -60,3 +60,9 @@ body{background:var(--mv-bg);color:var(--mv-text)}
 .filter-bar{display:flex;gap:.5rem;flex-wrap:wrap}
 .filter-bar .form-control,.filter-bar .form-select{max-width:220px}
 .table-actions .btn{width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+
+
+.meta-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:.75rem .85rem;height:100%}
+.meta-card .meta-label{font-size:.75rem;color:#64748b;text-transform:uppercase;letter-spacing:.04em}
+.meta-card .meta-value{font-size:1.05rem;font-weight:700;color:#0f172a}
+.route-details{background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:.8rem .9rem;display:grid;gap:.45rem}
