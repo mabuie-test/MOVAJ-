@@ -20,6 +20,13 @@ class RiderRepository extends BaseRepository
         return $stmt->fetch() ?: null;
     }
 
+
+    public function updatePasswordByEmail(string $email, string $passwordHash): void
+    {
+        $stmt = $this->db->prepare('UPDATE riders SET password_hash=:password_hash WHERE email=:email');
+        $stmt->execute(['password_hash' => $passwordHash, 'email' => $email]);
+    }
+
     public function approve(int $riderId): void
     {
         $stmt = $this->db->prepare("UPDATE riders SET approval_status='approved' WHERE id=:id");
