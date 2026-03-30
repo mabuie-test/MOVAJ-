@@ -24,7 +24,19 @@ class OrderService
             throw new \RuntimeException('Cidade fora da cobertura operacional.');
         }
 
-        $pickup = $this->routeService->geocodeAddress($input['pickup_address'], $city);
+        $hasPickupCoordinates = isset($input['pickup_lat'], $input['pickup_lng'])
+            && is_numeric($input['pickup_lat'])
+            && is_numeric($input['pickup_lng']);
+
+        $pickup = $hasPickupCoordinates
+            ? [
+                'lat' => (float)$input['pickup_lat'],
+                'lng' => (float)$input['pickup_lng'],
+                'confidence' => 1.0,
+                'display_name' => $input['pickup_address'] ?: 'Minha localização atual',
+            ]
+            : $this->routeService->geocodeAddress($input['pickup_address'], $city);
+
         $dropoff = $this->routeService->geocodeAddress($input['dropoff_address'], $city);
         $route = $this->routeService->calculateRoute($pickup, $dropoff);
         $pricing = $this->pricingService->quoteOrder((float)$route['distance_km'], !empty($input['urgent']), $input['package_type'] ?? 'normal');

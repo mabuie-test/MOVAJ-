@@ -3,12 +3,37 @@
   <h5 class="mb-0">Detalhe do Pedido #<?= e((string)$order['id']) ?></h5>
   <?php $status = $order['delivery_status']; require __DIR__ . '/../../components/status_badge.php'; ?>
 </div>
+<?php if (!empty($notice ?? '')): ?>
+  <div class="alert alert-success py-2"><?= e((string)$notice) ?></div>
+<?php endif; ?>
 <div class="map-meta mb-3">
   <div class="meta-item"><div class="meta-label">Distância</div><div class="meta-value"><?= e((string)$order['route_distance_km']) ?> km</div></div>
   <div class="meta-item"><div class="meta-label">ETA</div><div class="meta-value"><?= e((string)$order['route_duration_minutes']) ?> min</div></div>
   <div class="meta-item"><div class="meta-label">Preço total</div><div class="meta-value">MZN <?= e(number_format((float)$order['price_total'],2)) ?></div></div>
   <div class="meta-item"><div class="meta-label">Rider payout</div><div class="meta-value">MZN <?= e(number_format((float)$order['rider_payout'],2)) ?></div></div>
 </div>
+
+<?php if (($order['delivery_status'] ?? '') === 'pending_payment'): ?>
+<div class="module-card mb-3">
+  <h6 class="fw-bold mb-2"><i class="fa-solid fa-credit-card me-1"></i>Pagamento automático</h6>
+  <p class="text-muted small mb-2">Este pedido está pendente. Inicie o pagamento automático para avançar.</p>
+  <div class="row g-2 align-items-end">
+    <div class="col-md-5">
+      <label class="form-label">Telefone para débito</label>
+      <input type="text" class="form-control" id="pay-phone" placeholder="84xxxxxxx" value="<?= e((string)($order['pickup_contact_phone'] ?? '')) ?>">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Provedor</label>
+      <select id="pay-provider" class="form-select"><option value="mpesa">M-Pesa</option><option value="emola">e-Mola</option></select>
+    </div>
+    <div class="col-md-3">
+      <button type="button" class="btn btn-success w-100" onclick="payOrder(<?= (int)$order['id'] ?>, document.getElementById('pay-phone').value, document.getElementById('pay-provider').value, 'pay-feedback')"><i class="fa-solid fa-bolt me-1"></i>Pagar agora</button>
+    </div>
+  </div>
+  <div id="pay-feedback" class="small text-muted mt-2"></div>
+</div>
+<?php endif; ?>
+
 <div id="tracking-map"></div>
 <?php if (!empty($proof)): ?>
 <hr>

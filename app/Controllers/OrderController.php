@@ -80,7 +80,8 @@ class OrderController extends Controller
 
         $mapPayload = $this->map->orderMapPayload($order);
         $proof = $this->proofs->generateProofSummary((int)$order['id']);
-        $this->view('merchant/orders/show', ['order' => $order, 'mapPayload' => $mapPayload, 'proof' => $proof]);
+        $notice = (string)$request->input('notice', '');
+        $this->view('merchant/orders/show', ['order' => $order, 'mapPayload' => $mapPayload, 'proof' => $proof, 'notice' => $notice]);
     }
 
     public function pay(Request $request, string $id): void
