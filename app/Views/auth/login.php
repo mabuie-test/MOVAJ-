@@ -1,12 +1,14 @@
-<div class="row justify-content-center"><div class="col-md-6">
-<div class="card shadow-sm"><div class="card-body">
-<h3 class="mb-3">Login</h3>
+<div class="row justify-content-center"><div class="col-lg-5 col-md-7">
+<div class="card shadow-sm"><div class="card-body p-4">
+<h4 class="mb-1 fw-bold">Bem-vindo à MovaJá</h4>
+<p class="text-muted mb-3">Entre na sua conta para continuar a operação.</p>
 <?php if (!empty($error)): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
-<form method="post" action="/login">
+<form method="post" action="/login" class="vstack gap-2">
 <input type="hidden" name="_token" value="<?= csrf_token() ?>">
-<div class="mb-2"><label>Perfil</label><select name="role" class="form-select"><option value="merchant">Merchant</option><option value="rider">Rider</option><option value="admin">Admin</option></select></div>
-<div class="mb-2"><label>Email</label><input class="form-control" type="email" name="email" required></div>
-<div class="mb-2"><label>Password</label><input class="form-control" type="password" name="password" required></div>
-<button class="btn btn-dark w-100">Entrar</button>
+<div><label class="form-label">Perfil</label><select name="role" class="form-select"><option value="merchant">Lojista</option><option value="rider">Motoboy</option><option value="admin">Admin</option></select></div>
+<div><label class="form-label"><i class="fa-regular fa-envelope me-1"></i>Email</label><input class="form-control" type="email" name="email" required></div>
+<div><label class="form-label"><i class="fa-solid fa-lock me-1"></i>Password</label><input class="form-control" type="password" name="password" required></div>
+<button class="btn btn-primary w-100 mt-2">Entrar</button>
 </form>
+<div class="text-center mt-3 small"><a href="/forgot-password">Esqueceu a senha?</a></div>
 </div></div></div></div>

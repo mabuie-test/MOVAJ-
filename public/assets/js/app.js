@@ -2,8 +2,12 @@ async function fetchQuote(formId) {
   const form = document.getElementById(formId);
   const data = new FormData(form);
   const output = document.getElementById('quote-output');
+  const btn = form.querySelector('button[type="submit"], button');
 
   try {
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Calculando...'; }
+    output.textContent = 'Calculando rota real e preço...';
+
     const response = await fetch('/merchant/orders/quote', { method: 'POST', body: data });
     const json = await response.json();
     output.textContent = JSON.stringify(json, null, 2);
@@ -17,5 +21,7 @@ async function fetchQuote(formId) {
     }
   } catch (e) {
     output.textContent = `Erro ao cotar rota: ${e.message}`;
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-calculator me-1"></i>Calcular rota e preço'; }
   }
 }

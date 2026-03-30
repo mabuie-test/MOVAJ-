@@ -1,1 +1,11 @@
-<div class="card"><div class="card-body"><h3>reset_password</h3><p>Fluxo de autenticação reset_password.</p></div></div>
+<div class="row justify-content-center"><div class="col-lg-5">
+<div class="card"><div class="card-body p-4">
+<h4 class="fw-bold mb-2">Redefinir senha</h4>
+<form method="post" action="/reset-password" class="vstack gap-2">
+<input type="hidden" name="_token" value="<?= csrf_token() ?>">
+<input type="hidden" name="token" value="<?= e((string)($token ?? '')) ?>">
+<input class="form-control" type="password" name="password" placeholder="Nova senha" required>
+<input class="form-control" type="password" name="password_confirmation" placeholder="Confirmar senha" required>
+<button class="btn btn-primary">Atualizar senha</button>
+</form>
+</div></div></div></div>

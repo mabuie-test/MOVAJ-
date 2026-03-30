@@ -1,3 +1,5 @@
+    </div>
+  </main>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="/assets/js/maps/leaflet-core.js"></script>
