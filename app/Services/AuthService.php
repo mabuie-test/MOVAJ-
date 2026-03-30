@@ -39,20 +39,42 @@ class AuthService
 
     public function registerRider(array $data): int
     {
+        $email = strtolower(trim((string)($data['email'] ?? '')));
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new \InvalidArgumentException('Email inválido para cadastro de rider.');
+        }
+
+        $documents = $this->storeRiderDocuments();
+
         $riderId = $this->riders->create([
-            'name' => trim($data['name']),
-            'email' => strtolower(trim($data['email'])),
-            'phone' => preg_replace('/\D+/', '', $data['phone']),
-            'password_hash' => password_hash($data['password'], PASSWORD_BCRYPT),
-            'city' => trim($data['city']),
+            'name' => trim((string)$data['name']),
+            'email' => $email,
+            'phone' => preg_replace('/\D+/', '', (string)$data['phone']),
+            'password_hash' => password_hash((string)$data['password'], PASSWORD_BCRYPT),
+            'city' => trim((string)$data['city']),
             'zone' => $data['zone'] ?: null,
-            'wallet_provider' => $data['wallet_provider'],
+            'wallet_provider' => (string)$data['wallet_provider'],
             'bike_number' => $data['bike_number'] ?: null,
-            'document_path' => null,
+            'document_path' => json_encode($documents, JSON_UNESCAPED_UNICODE),
             'approval_status' => 'pending',
+            'id_number' => $data['id_number'] ?: null,
+            'id_issue_date' => $data['id_issue_date'] ?: null,
+            'id_expiry_date' => $data['id_expiry_date'] ?: null,
+            'nuit' => $data['nuit'] ?: null,
+            'address_line' => $data['address_line'] ?: null,
+            'emergency_contact_phone' => isset($data['emergency_contact_phone']) ? preg_replace('/\D+/', '', (string)$data['emergency_contact_phone']) : null,
+            'bi_front_path' => $documents['bi_front_path'] ?? null,
+            'bi_back_path' => $documents['bi_back_path'] ?? null,
+            'selfie_path' => $documents['selfie_path'] ?? null,
+            'motorcycle_plate' => $data['motorcycle_plate'] ?: null,
+            'motorcycle_livrete' => $data['motorcycle_livrete'] ?: null,
+            'motorcycle_model' => $data['motorcycle_model'] ?: null,
+            'motorcycle_year' => !empty($data['motorcycle_year']) ? (int)$data['motorcycle_year'] : null,
+            'motorcycle_front_path' => $documents['motorcycle_front_path'] ?? null,
+            'motorcycle_back_path' => $documents['motorcycle_back_path'] ?? null,
         ]);
 
-        $this->riderProfiles->upsert($riderId, $data['wallet_provider'], preg_replace('/\D+/', '', $data['phone']), $data['zone'] ?: null);
+        $this->riderProfiles->upsert($riderId, (string)$data['wallet_provider'], preg_replace('/\D+/', '', (string)$data['phone']), $data['zone'] ?: null);
         (new WalletService())->createWalletForRider($riderId);
         return $riderId;
     }
@@ -137,6 +159,47 @@ class AuthService
 
         $this->passwordResets->deleteByToken($token);
         return true;
+    }
+
+    private function storeRiderDocuments(): array
+    {
+        $files = [
+            'bi_front' => 'bi_front_path',
+            'bi_back' => 'bi_back_path',
+            'selfie_photo' => 'selfie_path',
+            'motorcycle_front' => 'motorcycle_front_path',
+            'motorcycle_back' => 'motorcycle_back_path',
+        ];
+
+        $saved = [];
+        $baseDir = __DIR__ . '/../../storage/uploads/riders';
+        if (!is_dir($baseDir)) {
+            mkdir($baseDir, 0775, true);
+        }
+
+        foreach ($files as $input => $targetKey) {
+            if (empty($_FILES[$input]['tmp_name'])) {
+                continue;
+            }
+
+            $tmp = (string)$_FILES[$input]['tmp_name'];
+            if (!is_uploaded_file($tmp)) {
+                continue;
+            }
+
+            $ext = strtolower(pathinfo((string)$_FILES[$input]['name'], PATHINFO_EXTENSION));
+            $safeExt = in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true) ? $ext : 'jpg';
+            $filename = sprintf('%s_%s.%s', $input, bin2hex(random_bytes(6)), $safeExt);
+            $absolutePath = $baseDir . '/' . $filename;
+
+            if (!move_uploaded_file($tmp, $absolutePath)) {
+                throw new \RuntimeException('Falha ao salvar documentos do rider.');
+            }
+
+            $saved[$targetKey] = 'storage/uploads/riders/' . $filename;
+        }
+
+        return $saved;
     }
 
     private function resolveUserTypeByEmail(string $email): ?string

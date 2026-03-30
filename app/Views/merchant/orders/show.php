@@ -27,7 +27,7 @@
       <select id="pay-provider" class="form-select"><option value="mpesa">M-Pesa</option><option value="emola">e-Mola</option></select>
     </div>
     <div class="col-md-3">
-      <button type="button" class="btn btn-success w-100" onclick="payOrder(<?= (int)$order['id'] ?>, document.getElementById('pay-phone').value, document.getElementById('pay-provider').value, 'pay-feedback')"><i class="fa-solid fa-bolt me-1"></i>Pagar agora</button>
+      <button type="button" class="btn btn-success w-100" onclick="payOrder(<?= (int)$order['id'] ?>, document.getElementById('pay-phone').value, document.getElementById('pay-provider').value, 'pay-feedback', '<?= csrf_token() ?>')"><i class="fa-solid fa-bolt me-1"></i>Pagar agora</button>
     </div>
   </div>
   <div id="pay-feedback" class="small text-muted mt-2"></div>

@@ -11,5 +11,5 @@
 <div><label class="form-label"><i class="fa-solid fa-lock me-1"></i>Password</label><input class="form-control" type="password" name="password" required></div>
 <button class="btn btn-primary w-100 mt-2">Entrar</button>
 </form>
-<div class="text-center mt-3 small"><a href="/forgot-password">Esqueceu a senha?</a></div>
+<div class="text-center mt-3 small"><a href="/forgot-password">Esqueceu a senha?</a> · <a href="/admin/login">Acesso Admin</a></div>
 </div></div></div></div>

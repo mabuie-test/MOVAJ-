@@ -140,7 +140,7 @@ async function submitOrder(formId) {
   }
 }
 
-async function payOrder(orderId, phone, provider = 'mpesa', feedbackId = null) {
+async function payOrder(orderId, phone, provider = 'mpesa', feedbackId = null, csrfToken = '') {
   if (!phone) {
     if (feedbackId) {
       const feedback = document.getElementById(feedbackId);
@@ -155,6 +155,7 @@ async function payOrder(orderId, phone, provider = 'mpesa', feedbackId = null) {
   const data = new FormData();
   data.append('phone', phone);
   data.append('provider', provider);
+  if (csrfToken) data.append('_token', csrfToken);
 
   try {
     const response = await fetch(`/merchant/orders/${orderId}/pay`, { method: 'POST', body: data });
@@ -173,10 +174,37 @@ async function payOrder(orderId, phone, provider = 'mpesa', feedbackId = null) {
   }
 }
 
-async function quickPayOrder(orderId) {
+async function quickPayOrder(orderId, csrfToken = "") {
   const phone = window.prompt('Digite o telefone para pagamento automático (ex.: 84xxxxxxx):');
   if (!phone) return;
-  await payOrder(orderId, phone, 'mpesa');
+  await payOrder(orderId, phone, 'mpesa', null, csrfToken);
+}
+
+
+async function approveRiderAdmin(riderId, buttonEl = null, csrfToken = "") {
+  if (buttonEl) {
+    buttonEl.disabled = true;
+    buttonEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Aprovando...';
+  }
+
+  try {
+    const form = new FormData();
+    if (csrfToken) form.append('_token', csrfToken);
+    const response = await fetch(`/admin/riders/${riderId}/approve`, { method: 'POST', body: form });
+    const json = await response.json();
+    if (!response.ok || !json.approved) {
+      throw new Error(json.error || 'Não foi possível aprovar rider.');
+    }
+
+    const row = document.getElementById(`pending-rider-${riderId}`);
+    if (row) row.remove();
+  } catch (e) {
+    if (buttonEl) {
+      buttonEl.disabled = false;
+      buttonEl.innerHTML = '<i class="fa-solid fa-check me-1"></i>Aprovar';
+    }
+    alert(`Erro ao aprovar rider: ${e.message}`);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

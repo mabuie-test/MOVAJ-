@@ -66,8 +66,12 @@ class AuthController extends Controller
 
     public function registerRider(Request $request): void
     {
-        $this->auth->registerRider($request->all());
-        Response::redirect('/login');
+        try {
+            $this->auth->registerRider($request->all());
+            Response::redirect('/login?notice=Conta rider criada. Aguarde aprovação do admin.');
+        } catch (\Throwable $e) {
+            $this->view('auth/register_rider', ['error' => $e->getMessage()]);
+        }
     }
 
     public function forgotPassword(Request $request): void
