@@ -8,7 +8,7 @@ class RiderRepository extends BaseRepository
 {
     public function create(array $data): int
     {
-        $stmt = $this->db->prepare('INSERT INTO riders (name, email, phone, password_hash, city, zone, wallet_provider, bike_number, document_path, approval_status, id_number, id_issue_date, id_expiry_date, nuit, address_line, emergency_contact_phone, bi_front_path, bi_back_path, selfie_path) VALUES (:name,:email,:phone,:password_hash,:city,:zone,:wallet_provider,:bike_number,:document_path,:approval_status,:id_number,:id_issue_date,:id_expiry_date,:nuit,:address_line,:emergency_contact_phone,:bi_front_path,:bi_back_path,:selfie_path)');
+        $stmt = $this->db->prepare('INSERT INTO riders (name, email, phone, password_hash, city, zone, wallet_provider, bike_number, document_path, approval_status, id_number, id_issue_date, id_expiry_date, nuit, address_line, emergency_contact_phone, bi_front_path, bi_back_path, selfie_path, motorcycle_plate, motorcycle_livrete, motorcycle_model, motorcycle_year, motorcycle_front_path, motorcycle_back_path) VALUES (:name,:email,:phone,:password_hash,:city,:zone,:wallet_provider,:bike_number,:document_path,:approval_status,:id_number,:id_issue_date,:id_expiry_date,:nuit,:address_line,:emergency_contact_phone,:bi_front_path,:bi_back_path,:selfie_path,:motorcycle_plate,:motorcycle_livrete,:motorcycle_model,:motorcycle_year,:motorcycle_front_path,:motorcycle_back_path)');
         $stmt->execute($data);
         return (int)$this->db->lastInsertId();
     }

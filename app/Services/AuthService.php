@@ -66,6 +66,12 @@ class AuthService
             'bi_front_path' => $documents['bi_front_path'] ?? null,
             'bi_back_path' => $documents['bi_back_path'] ?? null,
             'selfie_path' => $documents['selfie_path'] ?? null,
+            'motorcycle_plate' => $data['motorcycle_plate'] ?: null,
+            'motorcycle_livrete' => $data['motorcycle_livrete'] ?: null,
+            'motorcycle_model' => $data['motorcycle_model'] ?: null,
+            'motorcycle_year' => !empty($data['motorcycle_year']) ? (int)$data['motorcycle_year'] : null,
+            'motorcycle_front_path' => $documents['motorcycle_front_path'] ?? null,
+            'motorcycle_back_path' => $documents['motorcycle_back_path'] ?? null,
         ]);
 
         $this->riderProfiles->upsert($riderId, (string)$data['wallet_provider'], preg_replace('/\D+/', '', (string)$data['phone']), $data['zone'] ?: null);
@@ -161,6 +167,8 @@ class AuthService
             'bi_front' => 'bi_front_path',
             'bi_back' => 'bi_back_path',
             'selfie_photo' => 'selfie_path',
+            'motorcycle_front' => 'motorcycle_front_path',
+            'motorcycle_back' => 'motorcycle_back_path',
         ];
 
         $saved = [];
