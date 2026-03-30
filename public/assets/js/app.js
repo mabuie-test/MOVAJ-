@@ -129,13 +129,54 @@ async function submitOrder(formId) {
 
     const orderId = json.order_id;
     if (feedback) {
-      feedback.innerHTML = `Pedido #${orderId} criado com sucesso. <a href="/merchant/orders/${orderId}">Ver detalhes</a>.`;
+      feedback.textContent = `Pedido #${orderId} criado com sucesso. A redirecionar...`;
     }
+
+    window.location.href = `/merchant/orders/${orderId}`;
   } catch (e) {
     if (feedback) feedback.textContent = `Erro ao submeter pedido: ${e.message}`;
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-paper-plane me-1"></i>Submeter pedido'; }
   }
+}
+
+async function payOrder(orderId, phone, provider = 'mpesa', feedbackId = null) {
+  if (!phone) {
+    if (feedbackId) {
+      const feedback = document.getElementById(feedbackId);
+      if (feedback) feedback.textContent = 'Informe um número de telefone para pagamento.';
+    }
+    return;
+  }
+
+  const feedback = feedbackId ? document.getElementById(feedbackId) : null;
+  if (feedback) feedback.textContent = 'A iniciar pagamento automático...';
+
+  const data = new FormData();
+  data.append('phone', phone);
+  data.append('provider', provider);
+
+  try {
+    const response = await fetch(`/merchant/orders/${orderId}/pay`, { method: 'POST', body: data });
+    const json = await response.json();
+
+    if (!response.ok) throw new Error(json.error || 'Falha no pagamento automático.');
+
+    if (feedback) feedback.textContent = 'Pagamento iniciado com sucesso. A atualizar pedido...';
+    window.location.href = `/merchant/orders/${orderId}?notice=Pagamento iniciado com sucesso`;
+  } catch (e) {
+    if (feedback) {
+      feedback.textContent = `Erro no pagamento automático: ${e.message}`;
+    } else {
+      alert(`Erro no pagamento automático: ${e.message}`);
+    }
+  }
+}
+
+async function quickPayOrder(orderId) {
+  const phone = window.prompt('Digite o telefone para pagamento automático (ex.: 84xxxxxxx):');
+  if (!phone) return;
+  await payOrder(orderId, phone, 'mpesa');
 }
 
 document.addEventListener('DOMContentLoaded', () => {

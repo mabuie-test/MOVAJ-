@@ -12,7 +12,12 @@
 <td><?php $status=$order['delivery_status']; require __DIR__ . '/../../components/status_badge.php'; ?></td>
 <td><?= e($order['city']) ?></td>
 <td>MZN <?= e(number_format((float)$order['price_total'],2)) ?></td>
-<td class="d-flex gap-2"><a class="btn btn-sm btn-outline-primary" href="/merchant/orders/<?= e((string)$order['id']) ?>"><i class="fa-solid fa-eye"></i></a></td>
+<td class="d-flex gap-2">
+  <a class="btn btn-sm btn-outline-primary" href="/merchant/orders/<?= e((string)$order['id']) ?>"><i class="fa-solid fa-eye"></i></a>
+  <?php if (($order['delivery_status'] ?? '') === 'pending_payment'): ?>
+    <button class="btn btn-sm btn-success" type="button" onclick="quickPayOrder(<?= (int)$order['id'] ?>)"><i class="fa-solid fa-bolt me-1"></i>Pagar automático</button>
+  <?php endif; ?>
+</td>
 </tr>
 <?php endforeach; ?>
 </tbody></table>
